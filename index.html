@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Try the Look — Passion</title>
+  <meta name="description" content="Six looks, styled head to toe. Tap a pin to see the piece.">
+
+  <!-- One family, many weights: Hanken Grotesk (falls back to Helvetica / system sans offline) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ====================================================================
+       1 · NAVIGATION  (fixed)
+       Brand + links on the left · Cart + Profile on the right
+       ==================================================================== -->
+  <header class="nav" id="nav">
+    <div class="nav__left">
+      <a class="nav__brand" href="#" aria-label="Passion — home">Passion</a>
+      <nav class="nav__links" id="navLinks" aria-label="Main">
+        <a href="#">Home</a>
+        <a href="#" aria-current="page">Products</a>
+        <a href="#">About Us</a>
+        <a href="#">Contact Us</a>
+      </nav>
+    </div>
+
+    <div class="nav__right">
+      <button class="icon-btn" id="cartBtn" type="button" aria-label="Open bag">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 8.5h13l-1 11.5h-11l-1-11.5Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg>
+        <span class="badge" id="cartCount" aria-live="polite" hidden>0</span>
+      </button>
+      <button class="icon-btn" type="button" aria-label="Profile">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.6-3.6 3.5-5.6 7-5.6s6.4 2 7 5.6"/></svg>
+      </button>
+      <button class="icon-btn nav__burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="navLinks">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 9h16M4 15h16"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ====================================================================
+       2 · RUNWAY  (heading · carousel stage · bottom controls · panel)
+       Everything inside #stage is built by js/app.js from js/looks-data.js
+       ==================================================================== -->
+  <main class="runway" id="runway">
+
+    <!-- Heading block (fades out when a look is opened) -->
+    <div class="head" id="head">
+      <h1 class="head__title">Try the Look.</h1>
+      <p class="head__sub">Six looks, styled head to toe. Tap a pin to see the piece.</p>
+    </div>
+
+    <!-- Look header (appears when a look is open): "Look 04 / Studio Day" -->
+    <div class="lookhead" id="lookhead" aria-hidden="true">
+      <span class="lookhead__no" id="lookNo">Look 01</span>
+      <span class="lookhead__name" id="lookName">—</span>
+    </div>
+
+    <!-- Close (X) — returns to the carousel -->
+    <button class="close" id="closeBtn" type="button" aria-label="Close look" tabindex="-1">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+
+    <!-- The stage: soft floor + all looks (positioned every frame by JS) -->
+    <section class="stage" id="stage" aria-roledescription="carousel" aria-label="Looks">
+      <div class="floor" aria-hidden="true"></div>
+      <div class="looks" id="looks"></div>
+    </section>
+
+    <!-- Bottom controls (carousel mode) -->
+    <div class="controls" id="controls">
+      <button class="arrow" id="prevBtn" type="button" aria-label="Previous look">
+        <svg viewBox="0 0 32 12" width="28" height="12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M31 6H1M6 1 1 6l5 5"/></svg>
+      </button>
+
+      <ol class="index" id="index" aria-label="Choose a look"></ol>
+
+      <div class="controls__right">
+        <button class="pause" id="pauseBtn" type="button" aria-label="Pause autoplay" aria-pressed="false">
+          <svg class="i-pause" viewBox="0 0 12 12" width="11" height="11" fill="currentColor" aria-hidden="true"><rect x="2" y="1" width="2.6" height="10"/><rect x="7.4" y="1" width="2.6" height="10"/></svg>
+          <svg class="i-play" viewBox="0 0 12 12" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M3 1.2v9.6L10.8 6z"/></svg>
+        </button>
+        <button class="arrow" id="nextBtn" type="button" aria-label="Next look">
+          <svg viewBox="0 0 32 12" width="28" height="12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 6h30M26 1l5 5-5 5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Hint (look mode) -->
+    <p class="hint" id="hint">Tap a dot to shop the piece</p>
+
+    <!-- Cursor chip that follows the mouse over the centre model -->
+    <div class="cursor" id="cursor" aria-hidden="true"><span>View</span></div>
+
+    <!-- ==================================================================
+         4 · "IN THIS LOOK" PANEL  (slides in from the right; bottom sheet on phones)
+         ================================================================== -->
+    <aside class="panel" id="panel" role="dialog" aria-modal="false" aria-labelledby="panelTitle" aria-hidden="true">
+      <div class="panel__head">
+        <h2 class="panel__title" id="panelTitle">In this look</h2>
+        <span class="panel__count" id="panelCount">3 pieces</span>
+      </div>
+
+      <ul class="panel__list" id="panelList"></ul>
+
+      <footer class="panel__foot">
+        <div class="bundle">
+          <div class="bundle__text">
+            <strong>Complete the look</strong>
+            <span id="bundleNote">Bundle all 3 and save 10%</span>
+          </div>
+          <div class="bundle__price">
+            <s id="bundleWas"></s>
+            <span id="bundleNow"></span>
+          </div>
+        </div>
+        <button class="cta" id="addLookBtn" type="button">
+          <span class="cta__label">Add full look to bag</span>
+          <svg viewBox="0 0 32 12" width="26" height="12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 6h30M26 1l5 5-5 5"/></svg>
+        </button>
+      </footer>
+    </aside>
+
+    <!-- Toast -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Pin-coordinate helper readout (only with ?pinhelper) -->
+    <div class="pinhelper" id="pinhelper" hidden></div>
+  </main>
+
+  <script src="js/looks-data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
