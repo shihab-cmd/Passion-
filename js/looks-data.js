@@ -27,7 +27,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-01',
     title: 'The City Edit',
-    model: 'assets/models/model1.png',
+    model: 'assets/models/Model1.png',
     alt: 'Model in look 1',
     feetOffset: 0,
     products: [
@@ -39,7 +39,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-02',
     title: 'Gallery Opening',
-    model: 'assets/models/model2.png',
+    model: 'assets/models/Model2.png',
     alt: 'Model in look 2',
     feetOffset: 0,
     products: [
@@ -51,7 +51,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-03',
     title: 'Weekend Field',
-    model: 'assets/models/model3.png',
+    model: 'assets/models/Model3.png',
     alt: 'Model in look 3',
     feetOffset: 0,
     products: [
@@ -63,7 +63,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-04',
     title: 'Studio Day',
-    model: 'assets/models/model4.png',
+    model: 'assets/models/Model4.png',
     alt: 'Model in look 4',
     feetOffset: 0,
     products: [
@@ -75,7 +75,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-05',
     title: 'Late Autumn',
-    model: 'assets/models/model5.png',
+    model: 'assets/models/Model5.png',
     alt: 'Model in look 5',
     feetOffset: 0,
     products: [
@@ -87,7 +87,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-06',
     title: 'Soft Grey',
-    model: 'assets/models/model6.png',
+    model: 'assets/models/Model6.png',
     alt: 'Model in look 6',
     feetOffset: 0,
     products: [
@@ -99,7 +99,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-07',
     title: 'Noir Evening',
-    model: 'assets/models/model7.png',
+    model: 'assets/models/Model7.png',
     alt: 'Model in look 7',
     feetOffset: 0,
     products: [
@@ -110,7 +110,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-08',
     title: 'Urban Minimal',
-    model: 'assets/models/model8.png',
+    model: 'assets/models/Model8.png',
     alt: 'Model in look 8',
     feetOffset: 0,
     products: [
@@ -121,7 +121,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-09',
     title: 'Sunset Walk',
-    model: 'assets/models/model9.png',
+    model: 'assets/models/Model9.png',
     alt: 'Model in look 9',
     feetOffset: 0,
     products: [
@@ -132,7 +132,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-10',
     title: 'Modern Tailor',
-    model: 'assets/models/model10.png',
+    model: 'assets/models/Model10.png',
     alt: 'Model in look 10',
     feetOffset: 0,
     products: [
@@ -143,7 +143,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-11',
     title: 'Casual Friday',
-    model: 'assets/models/model11.png',
+    model: 'assets/models/Model11.png',
     alt: 'Model in look 11',
     feetOffset: 0,
     products: [
@@ -154,7 +154,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-12',
     title: 'Highland Tweed',
-    model: 'assets/models/model12.png',
+    model: 'assets/models/Model12.png',
     alt: 'Model in look 12',
     feetOffset: 0,
     products: [
@@ -165,7 +165,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-13',
     title: 'Athletic Luxe',
-    model: 'assets/models/model13.png',
+    model: 'assets/models/Model13.png',
     alt: 'Model in look 13',
     feetOffset: 0,
     products: [
@@ -176,7 +176,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-14',
     title: 'Monochrome Drift',
-    model: 'assets/models/model14.png',
+    model: 'assets/models/Model14.png',
     alt: 'Model in look 14',
     feetOffset: 0,
     products: [
@@ -187,7 +187,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-15',
     title: 'Vintage Soul',
-    model: 'assets/models/model15.png',
+    model: 'assets/models/Model15.png',
     alt: 'Model in look 15',
     feetOffset: 0,
     products: [
@@ -198,7 +198,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-16',
     title: 'Rain & City',
-    model: 'assets/models/model16.png',
+    model: 'assets/models/Model16.png',
     alt: 'Model in look 16',
     feetOffset: 0,
     products: [
@@ -209,7 +209,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-17',
     title: 'Neon Pulse',
-    model: 'assets/models/model17.png',
+    model: 'assets/models/Model17.png',
     alt: 'Model in look 17',
     feetOffset: 0,
     products: [
@@ -220,7 +220,7 @@ window.PASSION_LOOKS = [
   {
     id: 'look-18',
     title: 'Grand Finale',
-    model: 'assets/models/model18.png',
+    model: 'assets/models/Model18.png',
     alt: 'Model in look 18',
     feetOffset: 0,
     products: [
