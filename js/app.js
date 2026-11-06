@@ -1,24 +1,11 @@
 /* ==========================================================================
-   PASSION — "Try the Look"  ·  app.js
+   PASSION — "Try the Look"  ·  app.js  (updated)
    Vanilla JS, zero dependencies.
 
-   WHY A CUSTOM ENGINE (and not Swiper / scroll-snap)?
-   The Nike Runway effect is not a plain slider: every model's scale, blur,
-   opacity, depth and SHADOW is a continuous function of its distance from the
-   centre. So the carousel keeps ONE floating-point position (S.pos) that is
-   eased towards a target every frame (frame-rate independent exponential
-   damping = the "buttery" feel), and each model is drawn from that number.
-   Drag, wheel, keys, arrows, autoplay and index clicks only change S.target.
-
-   File map
-     A. Config + helpers
-     B. DOM build (looks, pins, index)
-     C. Measuring / layout geometry
-     D. Frame loop  (position, focus, depth, shadow, chip, autoplay)
-     E. Input (drag, wheel, keys, buttons)
-     F. Look mode + "In this look" panel
-     G. Bag (cart) + toast
-     H. Boot
+   - Original runway / carousel / pins / shadow / panel logic kept intact
+   - Added: view switching (Home / Products / About / Contact)
+   - Added: real Cart drawer
+   - Added: Products grid + Product detail page
    ========================================================================== */
 (() => {
   'use strict';
@@ -37,7 +24,7 @@
   if (!N) { console.warn('[Passion] PASSION_LOOKS is empty — nothing to render.'); return; }
 
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const RM = REDUCED ? 3 : 1;                       // speed-up factor for reduced motion
+  const RM = REDUCED ? 3 : 1;
 
   const $ = (id) => document.getElementById(id);
   const runway = $('runway'), stage = $('stage'), looksEl = $('looks'), indexEl = $('index');
@@ -49,6 +36,29 @@
   const nav = $('nav'), burger = $('burger'), helperEl = $('pinhelper');
   const PIN_HELPER = /[?&]pinhelper/.test(location.search);
 
+  // New elements
+  const productsPage = $('productsPage');
+  const productDetail = $('productDetail');
+  const aboutPage = $('aboutPage');
+  const contactPage = $('contactPage');
+  const productsGrid = $('productsGrid');
+  const cartDrawer = $('cartDrawer');
+  const cartOverlay = $('cartOverlay');
+  const cartList = $('cartList');
+  const cartTotal = $('cartTotal');
+  const closeCartBtn = $('closeCart');
+  const checkoutBtn = $('checkoutBtn');
+  const backToProducts = $('backToProducts');
+  const detailImg = $('detailImg');
+  const detailName = $('detailName');
+  const detailPrice = $('detailPrice');
+  const detailDesc = $('detailDesc');
+  const detailAddBtn = $('detailAddBtn');
+  const orderNowBtn = $('orderNowBtn');
+  const sizeRow = $('sizeRow');
+  const colorRow = $('colorRow');
+  const profileBtn = $('profileBtn');
+
   runway.dataset.stage = CFG.stageStyle;
 
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -56,35 +66,39 @@
   const damp = (cur, tgt, rate, dt) => cur + (tgt - cur) * (1 - Math.exp(-rate * dt));
   const mod = (i) => ((i % N) + N) % N;
   const pad2 = (n) => String(n).padStart(2, '0');
-  /** Signed, wrapped distance in "looks" → range [-N/2, N/2] (this is what makes it loop). */
   const wrapD = (d) => { d = mod(d); return d > N / 2 ? d - N : d; };
   const fmt = new Intl.NumberFormat(CFG.locale, { style: 'currency', currency: CFG.currency });
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  /* ---- Depth profile: how a model looks at distance |d| from the centre ---- */
+  /* ---- Depth profile ---- */
   const depthScale   = (a) => a <= 1 ? 1 - 0.13 * a : Math.max(0.5, 0.87 - 0.10 * (a - 1));
-  const depthBlur    = (a) => a <= 1 ? a * 0.7 : 0.7 + (a - 1) * 4.6;                 // px
+  const depthBlur    = (a) => a <= 1 ? a * 0.7 : 0.7 + (a - 1) * 4.6;
   const depthOpacity = (a) => a <= 1 ? 1 - 0.08 * a : a <= 2 ? 0.92 - 0.40 * (a - 1) : Math.max(0, 0.52 * (1 - (a - 2) / 0.62));
 
-  /* ---- Mutable state ---------------------------------------------------- */
+  /* ---- Mutable state ---- */
   const S = {
-    pos: 0, target: 0, vel: 0,                // carousel position (in looks) + smoothed velocity
-    focus: 0, focusTarget: 0, active: 0,      // look-mode amount 0..1 and which look is open
-    fcx: 0, fFloor: 0, fH: 0,                 // animated focus geometry (centre x, floor y, height)
+    pos: 0, target: 0, vel: 0,
+    focus: 0, focusTarget: 0, active: 0,
+    fcx: 0, fFloor: 0, fH: 0,
     intro: REDUCED ? 1 : 0, introOn: false,
-    hover: 0, hoverTarget: 0,                 // pointer over centre model → lift
+    hover: 0, hoverTarget: 0,
     chip: 0, chipTarget: 0, cx: -200, cy: -200, mx: -200, my: -200,
     dragging: false, justDragged: false, pd: null,
     wheelActive: false, wheelBase: 0, wheelAcc: 0, wheelLock: 0, wheelT: 0,
     playing: CFG.autoplay && !REDUCED, userPaused: false, progress: 0,
-    panelOpen: false, bag: 0, cur: -1, last: 0, busy: false,
+    panelOpen: false, bag: [],           // ← now an array of items
+    cur: -1, last: 0, busy: false,
     W: 0, Hs: 0, mobile: false, floorY: 0, Hc: 0, S1: 0, S2: 0, sheetH: 0,
     geoReady: false, lastFocusEl: null,
+    currentView: 'runway',
+    currentProduct: null,
+    selectedSize: 'S',
+    selectedColor: 'Black',
   };
   let raf = 0;
 
   /* ======================================================================
-     B. DOM BUILD
+     B. DOM BUILD (runway)
      ====================================================================== */
   const items = LOOKS.map((look, i) => {
     const el = document.createElement('article');
@@ -94,13 +108,13 @@
     el.setAttribute('aria-label', `Look ${i + 1} of ${N}: ${look.title}`);
 
     const pins = (look.products || []).map((p, k) => p.pin
-      ? `<button class="pin" type="button" tabindex="-1" data-k="${k}" data-n="${k + 1}" style="left:${p.pin.x}%;top:${p.pin.y}%;--i:${k}" aria-label="Pin ${k + 1}: ${esc(p.name)}"></button>`
+      ? `<button class="pin" type="button" tabindex="-1" data-k="\( {k}" data-n=" \){k + 1}" style="left:\( {p.pin.x}%;top: \){p.pin.y}%;--i:${k}" aria-label="Pin ${k + 1}: ${esc(p.name)}"></button>`
       : '').join('');
 
     el.innerHTML =
       `<div class="shadow" style="--feet:${Number(look.feetOffset) || 0}"><i class="sh sh--ambient"></i><i class="sh sh--core"></i><i class="sh sh--contact"></i></div>` +
       `<img class="look__img" alt="${esc(look.alt || look.title)}" draggable="false" decoding="async">` +
-      `<button class="look__hit" type="button" data-i="${i}" aria-label="${esc(look.title)} — see what's in this look"></button>` +
+      `<button class="look__hit" type="button" data-i="\( {i}" aria-label=" \){esc(look.title)} — see what's in this look"></button>` +
       `<div class="pins">${pins}</div>`;
 
     const img = el.querySelector('.look__img');
@@ -112,11 +126,10 @@
     return it;
   });
 
-  // Bottom index (01 The City Edit ▬▬▬ 02 03 …)
   const idxBtns = LOOKS.map((look, i) => {
     const li = document.createElement('li');
     li.innerHTML = `<button class="idx" type="button" data-i="${i}" aria-label="Go to look ${i + 1}: ${esc(look.title)}">` +
-      `<span class="idx__bar"><i></i></span><span class="idx__label"><b>${pad2(i + 1)}</b><em>${esc(look.title)}</em></span></button>`;
+      `<span class="idx__bar"><i></i></span><span class="idx__label"><b>\( {pad2(i + 1)}</b><em> \){esc(look.title)}</em></span></button>`;
     indexEl.appendChild(li);
     return li.firstElementChild;
   });
@@ -129,12 +142,12 @@
     const r = stage.getBoundingClientRect();
     S.W = r.width; S.Hs = r.height;
     S.mobile = window.innerWidth <= 760;
-    S.sheetH = S.mobile ? Math.min(window.innerHeight * 0.46, 400) : 0;   // keep in sync with --sheet-h
-    S.floorY = S.Hs - (S.mobile ? 92 : 104);                           // the "floor" line the feet stand on
-    S.Hc = S.mobile ? clamp(S.floorY - 176, 220, 560) : clamp(S.floorY * 0.72, 260, 640);   // centre model height
+    S.sheetH = S.mobile ? Math.min(window.innerHeight * 0.46, 400) : 0;
+    S.floorY = S.Hs - (S.mobile ? 92 : 104);
+    S.Hc = S.mobile ? clamp(S.floorY - 176, 220, 560) : clamp(S.floorY * 0.72, 260, 640);
     const sp = CFG.spacing || 1;
-    S.S1 = S.mobile ? S.W * 0.50 * sp : S.Hc * 0.56 * sp;               // distance centre → first neighbour
-    S.S2 = S.mobile ? S.W * 0.17 * sp : S.Hc * 0.24 * sp;               // each further step (compresses with depth)
+    S.S1 = S.mobile ? S.W * 0.50 * sp : S.Hc * 0.56 * sp;
+    S.S2 = S.mobile ? S.W * 0.17 * sp : S.Hc * 0.24 * sp;
     runway.style.setProperty('--floor-y', S.floorY + 'px');
     sizeItems();
     if (!S.geoReady) { const g = focusGeo(); S.fcx = g.cx; S.fFloor = g.floor; S.fH = g.h; S.geoReady = true; }
@@ -142,7 +155,6 @@
   function sizeItems() {
     items.forEach((it) => { it.w = S.Hc * it.aspect; it.el.style.width = it.w + 'px'; it.el.style.height = S.Hc + 'px'; });
   }
-  /** Where the opened look should stand (shifts left of the panel on desktop, above the sheet on phones). */
   function focusGeo() {
     const panelW = S.mobile ? 0 : Math.min(420, window.innerWidth);
     const cx = (!S.mobile && S.panelOpen) ? (S.W - panelW) / 2 : S.W / 2;
@@ -167,16 +179,14 @@
   function step(dt) {
     let busy = false;
 
-    /* 1 ── carousel position: ease S.pos → S.target (the buttery bit) */
     const rate = (S.dragging ? 22 : S.wheelActive ? 11 : 4.8) * RM;
     const prev = S.pos;
     S.pos = damp(S.pos, S.target, rate, dt);
     if (Math.abs(S.target - S.pos) < 0.0004) S.pos = S.target;
-    S.vel = damp(S.vel, (S.pos - prev) / dt, 15, dt);             // looks / second, smoothed
+    S.vel = damp(S.vel, (S.pos - prev) / dt, 15, dt);
     if (Math.abs(S.vel) < 0.003) S.vel = 0;
     const moving = S.pos !== S.target || S.vel !== 0;
 
-    /* 2 ── look mode amount + animated focus geometry */
     const fPrev = S.focus;
     S.focus = damp(S.focus, S.focusTarget, 4.4 * RM, dt);
     if (Math.abs(S.focusTarget - S.focus) < 0.0006) S.focus = S.focusTarget;
@@ -187,28 +197,23 @@
     const geoMoving = gPrev !== S.fcx + S.fFloor + S.fH;
     const focusMoving = fPrev !== S.focus || (S.focus > 0 && geoMoving);
 
-    /* 3 ── hover lift (pointer over the centre model) */
     const hPrev = S.hover;
     S.hover = damp(S.hover, S.hoverTarget, 7 * RM, dt);
     if (Math.abs(S.hover - S.hoverTarget) < 0.002) S.hover = S.hoverTarget;
 
-    /* 4 ── one-time intro (blur-in, staggered from the centre outwards) */
     let intro = false;
     if (S.introOn && S.intro < 1) { S.intro = Math.min(1, S.intro + dt / 2.1); intro = true; }
 
-    /* 5 ── autoplay progress (pauses when hovering the centre model, dragging, in look mode…) */
     if (S.playing && !S.userPaused && S.introOn && S.intro >= 0.6 && !S.dragging && !S.focusTarget && !S.hoverTarget && !document.hidden && !S.wheelActive) {
       S.progress += dt / (CFG.autoplayDelay / 1000);
       if (S.progress >= 1) { S.progress = 0; S.target = Math.round(S.target) + 1; }
     }
 
-    /* 6 ── draw every model from the numbers above */
     if (moving || focusMoving || intro || S.hover !== S.hoverTarget || hPrev !== S.hover || !S.drawn) {
       drawItems();
       S.drawn = true;
     }
 
-    /* 7 ── index UI + cursor chip */
     updateIndex();
     stepChip(dt);
 
@@ -218,7 +223,6 @@
     S.busy = busy;
   }
 
-  /** Position / scale / blur / fade / shadow for every model. */
   function drawItems() {
     const { W, Hc, S1, S2, floorY } = S;
     const f = S.focus;
@@ -228,45 +232,39 @@
     items.forEach((it, i) => {
       const d = wrapD(i - S.pos), a = Math.abs(d);
 
-      // — depth profile ————————————————————————————————————————————
       let s = depthScale(a);
       let x = Math.sign(d) * (S1 * Math.min(a, 1) + S2 * Math.max(0, a - 1));
-      let y = -Math.min(a, 3) * 0.018 * Hc;           // receding models stand slightly "further back" (higher)
+      let y = -Math.min(a, 3) * 0.018 * Hc;
       let blur = depthBlur(a), op = depthOpacity(a);
 
-      // — hover lift: centre model rises a few px, its shadow tightens —————
       const lift = (i === centerIdx && !S.focusTarget) ? S.hover : 0;
       y -= lift * 0.016 * Hc;
 
-      // — look mode ————————————————————————————————————————————————
       if (i === S.active && f > 0) {
         s = lerp(s, S.fH / Hc, f);
         x = lerp(x, S.fcx - W / 2, f);
         y = lerp(y, S.fFloor - floorY, f);
         blur = lerp(blur, 0, f); op = lerp(op, 1, f);
-        it.el.style.setProperty('--inv', (1 / s).toFixed(4));   // keeps pins a constant size
+        it.el.style.setProperty('--inv', (1 / s).toFixed(4));
       } else if (f > 0) {
         op *= (1 - f); blur += f * 10; x += Math.sign(d || 1) * f * S1 * 0.6;
       }
 
-      // — intro: blur in from the centre outwards ————————————————————
       if (S.intro < 1) {
         const k = clamp(S.intro * 1.55 - a * 0.2, 0, 1), e = 1 - Math.pow(1 - k, 3);
         op *= e; blur += (1 - e) * 16; y += (1 - e) * 22;
       }
 
-      // — write ———————————————————————————————————————————————————
       const el = it.el;
-      el.style.transform = `translate3d(${(W / 2 + x - it.w / 2).toFixed(2)}px, ${(floorY + y - Hc).toFixed(2)}px, 0) scale(${s.toFixed(4)})`;
+      el.style.transform = `translate3d(${(W / 2 + x - it.w / 2).toFixed(2)}px, \( {(floorY + y - Hc).toFixed(2)}px, 0) scale( \){s.toFixed(4)})`;
       el.style.opacity = op.toFixed(3);
       el.style.filter = blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : 'none';
       el.style.zIndex = String(100 - Math.round(a * 10) + (i === S.active && f > 0 ? 50 : 0));
       el.style.visibility = op < 0.004 ? 'hidden' : 'visible';
       el.classList.toggle('is-center', i === centerIdx);
 
-      // — SHADOW: trails behind motion, stretches with speed, lifts with hover ——
       const sx = 1 + Math.abs(v) * 0.11 - lift * 0.09;
-      it.shadow.style.transform = `translate3d(${(v * Hc * 0.05).toFixed(1)}px,0,0) scaleX(${sx.toFixed(3)})`;
+      it.shadow.style.transform = `translate3d(\( {(v * Hc * 0.05).toFixed(1)}px,0,0) scaleX( \){sx.toFixed(3)})`;
       it.shadow.style.opacity = (1 - Math.abs(v) * 0.05 - lift * 0.30).toFixed(3);
     });
   }
@@ -278,7 +276,7 @@
       idxBtns.forEach((b, i) => { b.classList.toggle('is-active', i === cur); i === cur ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current'); });
       idxFills.forEach((el) => el.style.setProperty('--p', 0));
     }
-    const p = S.playing ? S.progress : 1;           // autoplay off → active segment shows full
+    const p = S.playing ? S.progress : 1;
     idxFills[cur].style.setProperty('--p', p.toFixed(4));
   }
 
@@ -287,13 +285,13 @@
     S.chip = damp(S.chip, S.chipTarget, 12, dt);
     if (Math.abs(S.chip - S.chipTarget) < 0.003) S.chip = S.chipTarget;
     S.cx = damp(S.cx, S.mx, 20, dt); S.cy = damp(S.cy, S.my, 20, dt);
-    if (S.chipTarget && S.chip < 0.05) { S.cx = S.mx; S.cy = S.my; }          // snap on first appearance
+    if (S.chipTarget && S.chip < 0.05) { S.cx = S.mx; S.cy = S.my; }
     cursorEl.style.opacity = S.chip.toFixed(3);
-    cursorEl.style.transform = `translate3d(${(S.cx - 33).toFixed(1)}px, ${(S.cy - 33).toFixed(1)}px, 0) scale(${(0.5 + 0.5 * S.chip).toFixed(3)})`;
+    cursorEl.style.transform = `translate3d(${(S.cx - 33).toFixed(1)}px, \( {(S.cy - 33).toFixed(1)}px, 0) scale( \){(0.5 + 0.5 * S.chip).toFixed(3)})`;
   }
 
   /* ======================================================================
-     E. INPUT
+     E. INPUT (runway)
      ====================================================================== */
   const goTo = (i) => { if (S.focusTarget) return; S.target += wrapD(i - S.target); S.progress = 0; kick(); };
   const next = () => { if (S.focusTarget) return; S.target = Math.round(S.target) + 1; S.progress = 0; kick(); };
@@ -311,10 +309,9 @@
   });
   if (!S.playing) pauseBtn.hidden = true;
 
-  /* Click a model: side model → bring to centre · centre model → open the look */
   items.forEach((it, i) => it.hit.addEventListener('click', (e) => {
     if (S.justDragged) return;
-    if (S.focusTarget) {                                                        // already in look mode
+    if (S.focusTarget) {
       if (PIN_HELPER) return pinHelper(e, it);
       if (!S.panelOpen) openPanel();
       return;
@@ -322,7 +319,6 @@
     if (mod(Math.round(S.target)) === i) openLook(i); else goTo(i);
   }));
 
-  /* Drag / swipe with momentum — pointer events (mouse + touch + pen) */
   stage.addEventListener('pointerdown', (e) => {
     if (S.focusTarget || (e.pointerType === 'mouse' && e.button !== 0)) return;
     S.pd = { id: e.pointerId, x: e.clientX, moved: false, start: S.target, samples: [{ x: e.clientX, t: performance.now() }] };
@@ -346,9 +342,9 @@
     S.pd = null;
     if (!p.moved) return;
     const a = p.samples[0], b = p.samples[p.samples.length - 1];
-    const vPx = (b.x - a.x) / Math.max(1, b.t - a.t);                          // px / ms
-    const vLooks = -(vPx * 1000) / S.S1;                                        // looks / s
-    const proj = S.target + clamp(vLooks * 0.26, -1.8, 1.8);                    // momentum projection
+    const vPx = (b.x - a.x) / Math.max(1, b.t - a.t);
+    const vLooks = -(vPx * 1000) / S.S1;
+    const proj = S.target + clamp(vLooks * 0.26, -1.8, 1.8);
     S.target = clamp(Math.round(proj), Math.round(p.start) - 2, Math.round(p.start) + 2);
     S.dragging = false; stage.classList.remove('is-dragging');
     S.justDragged = true; setTimeout(() => { S.justDragged = false; }, 60);
@@ -359,7 +355,6 @@
   stage.addEventListener('click', (e) => { if (S.justDragged) { e.stopPropagation(); e.preventDefault(); } }, true);
   stage.addEventListener('pointerleave', () => { S.chipTarget = 0; S.hoverTarget = 0; document.body.classList.remove('has-chip'); kick(); });
 
-  /* Trackpad / wheel: one gesture = one look (with a short lock so momentum tails don't skip) */
   stage.addEventListener('wheel', (e) => {
     if (S.focusTarget) return;
     const dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
@@ -369,10 +364,10 @@
     if (Math.abs(dx) < 3) return;
     if (!S.wheelActive) { S.wheelActive = true; S.wheelBase = Math.round(S.target); S.wheelAcc = 0; }
     S.wheelAcc += dx;
-    S.target = S.wheelBase + clamp(S.wheelAcc / (S.S1 * 1.4), -1.4, 1.4);        // follows the finger a little…
+    S.target = S.wheelBase + clamp(S.wheelAcc / (S.S1 * 1.4), -1.4, 1.4);
     S.progress = 0;
     clearTimeout(S.wheelT);
-    S.wheelT = setTimeout(() => {                                                // …then commits to exactly one step
+    S.wheelT = setTimeout(() => {
       const delta = S.target - S.wheelBase;
       S.target = S.wheelBase + (Math.abs(delta) > 0.08 ? Math.sign(delta) : 0);
       S.wheelActive = false; S.wheelLock = performance.now() + 380; kick();
@@ -380,15 +375,18 @@
     kick();
   }, { passive: false });
 
-  /* Keyboard */
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { if (S.focusTarget) { e.preventDefault(); onClose(); } return; }
-    if (S.focusTarget) return;
+    if (e.key === 'Escape') {
+      if (S.currentView === 'product') { showView('products'); return; }
+      if (cartDrawer.classList.contains('is-open')) { closeCart(); return; }
+      if (S.focusTarget) { e.preventDefault(); onClose(); }
+      return;
+    }
+    if (S.focusTarget || S.currentView !== 'runway') return;
     if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); prevLook(); }
   });
 
-  /* Cursor chip: "View" follows the mouse while it hovers the centre model */
   function trackChip(e) {
     S.mx = e.clientX; S.my = e.clientY;
     const hit = e.target.closest && e.target.closest('.look__hit');
@@ -398,12 +396,10 @@
     kick();
   }
 
-  /* Nav */
   burger.addEventListener('click', () => {
     const open = nav.classList.toggle('is-menu');
     burger.setAttribute('aria-expanded', String(open));
   });
-  cartBtn.addEventListener('click', () => toast(S.bag ? `${S.bag} ${S.bag === 1 ? 'piece' : 'pieces'} in your bag` : 'Your bag is empty'));
 
   /* ======================================================================
      F. LOOK MODE + PANEL
@@ -411,7 +407,7 @@
   function openLook(i) {
     if (S.focusTarget) return;
     S.active = mod(i);
-    S.target = S.active;                                   // lock exactly onto this look
+    S.target = S.active;
     S.lastFocusEl = document.activeElement;
     const it = items[S.active], look = it.look;
     lookNo.textContent = `Look ${pad2(S.active + 1)}`; lookName.textContent = look.title;
@@ -448,18 +444,16 @@
     panelList.querySelectorAll('.is-hot').forEach((n) => n.classList.remove('is-hot'));
     if (!silent) kick();
   }
-  /** X / Esc: panel-only close in two-step mode, otherwise back to the carousel. */
   function onClose() {
     if (S.panelOpen && !CFG.panelOpensWithLook) closePanel(); else closeLook();
   }
   closeBtn.addEventListener('click', onClose);
 
-  /** Builds the "In this look" list for ONE look — only that look's products ever render. */
   function renderPanel(look) {
     const list = look.products || [];
     panelList.innerHTML = list.map((p, k) => `
-      <li class="item" data-k="${k}" style="--i:${k}">
-        <div class="item__thumb"><img src="${esc(p.image)}" alt="" loading="lazy" draggable="false"><span class="item__no">${k + 1}</span></div>
+      <li class="item" data-k="\( {k}" style="--i: \){k}">
+        <div class="item__thumb"><img src="\( {esc(p.image)}" alt="" loading="lazy" draggable="false"><span class="item__no"> \){k + 1}</span></div>
         <div class="item__info">
           <span class="item__brand">${esc(p.brand || CFG.brand)}</span>
           <span class="item__name">${esc(p.name)}</span>
@@ -480,7 +474,6 @@
     addLookBtn.classList.remove('is-done');
     addLookBtn.querySelector('.cta__label').textContent = 'Add full look to bag';
 
-    // row ↔ pin cross-highlighting
     const pins = items[S.active].el.querySelectorAll('.pin');
     panelList.querySelectorAll('.item').forEach((row) => {
       const k = +row.dataset.k, pin = items[S.active].el.querySelector(`.pin[data-k="${k}"]`);
@@ -507,9 +500,7 @@
   addLookBtn.addEventListener('click', () => {
     const look = items[S.active].look, list = look.products || [];
     if (!list.length) return;
-    const disc = CFG.bundleDiscount || 0, total = list.reduce((s, p) => s + Number(p.price || 0), 0) * (1 - disc);
-    S.bag += list.length; updateBag();
-    emit({ lookId: look.id, products: list.map(brief), bundle: true, total });
+    list.forEach(p => addToBag(p));
     addLookBtn.classList.add('is-done');
     addLookBtn.querySelector('.cta__label').textContent = 'Added to bag';
     setTimeout(() => { addLookBtn.classList.remove('is-done'); addLookBtn.querySelector('.cta__label').textContent = 'Add full look to bag'; }, 2200);
@@ -517,57 +508,282 @@
   });
 
   /* ======================================================================
-     G. BAG (cart) + TOAST
-     Hook your real cart here — listen for:
-       document.addEventListener('passion:add-to-bag', e => console.log(e.detail))
+     G. CART SYSTEM
      ====================================================================== */
-  const brief = (p) => ({ id: p.id, name: p.name, price: p.price, qty: 1, url: p.url || null });
-  const emit = (detail) => document.dispatchEvent(new CustomEvent('passion:add-to-bag', { detail }));
+  function addToBag(product, qty = 1) {
+    const existing = S.bag.find(i => i.id === product.id);
+    if (existing) {
+      existing.qty += qty;
+    } else {
+      S.bag.push({
+        id: product.id || product.name,
+        name: product.name,
+        price: Number(product.price) || 0,
+        image: product.image,
+        brand: product.brand || CFG.brand,
+        qty
+      });
+    }
+    updateBagUI();
+  }
 
   function addOne(p, btn) {
-    S.bag += 1; updateBag();
-    emit({ lookId: items[S.active].look.id, products: [brief(p)], bundle: false, total: p.price });
-    btn.classList.add('is-added'); setTimeout(() => btn.classList.remove('is-added'), 1600);
+    addToBag(p);
+    if (btn) {
+      btn.classList.add('is-added');
+      setTimeout(() => btn.classList.remove('is-added'), 1600);
+    }
     toast(`${p.name} added to bag`);
   }
-  function updateBag() {
-    cartCount.hidden = S.bag === 0; cartCount.textContent = S.bag;
-    cartCount.classList.remove('is-bump'); void cartCount.offsetWidth; cartCount.classList.add('is-bump');
-  }
-  let toastT = 0;
-  function toast(msg) {
-    toastEl.textContent = msg; toastEl.classList.add('is-on');
-    clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('is-on'), 2300);
+
+  function updateBagUI() {
+    const totalQty = S.bag.reduce((s, i) => s + i.qty, 0);
+    cartCount.hidden = totalQty === 0;
+    cartCount.textContent = totalQty;
+    cartCount.classList.remove('is-bump');
+    void cartCount.offsetWidth;
+    cartCount.classList.add('is-bump');
+
+    // Render cart list
+    if (!S.bag.length) {
+      cartList.innerHTML = `<li style="padding:40px 24px;text-align:center;color:var(--muted)">Your bag is empty</li>`;
+    } else {
+      cartList.innerHTML = S.bag.map(item => `
+        <li class="cart-item">
+          <img src="${esc(item.image)}" alt="" loading="lazy">
+          <div>
+            <div class="cart-item__name">${esc(item.name)}</div>
+            <div class="cart-item__meta">${item.qty} × ${fmt.format(item.price)}</div>
+          </div>
+          <div class="cart-item__price">${fmt.format(item.price * item.qty)}</div>
+        </li>
+      `).join('');
+    }
+
+    const total = S.bag.reduce((s, i) => s + i.price * i.qty, 0);
+    cartTotal.textContent = fmt.format(total);
   }
 
-  /* Pin coordinate helper (?pinhelper): click the model to read x / y in %. */
+  function openCart() {
+    cartDrawer.classList.add('is-open');
+    cartOverlay.classList.add('is-open');
+    cartDrawer.setAttribute('aria-hidden', 'false');
+  }
+  function closeCart() {
+    cartDrawer.classList.remove('is-open');
+    cartOverlay.classList.remove('is-open');
+    cartDrawer.setAttribute('aria-hidden', 'true');
+  }
+
+  cartBtn.addEventListener('click', openCart);
+  closeCartBtn.addEventListener('click', closeCart);
+  cartOverlay.addEventListener('click', closeCart);
+  checkoutBtn.addEventListener('click', () => {
+    if (!S.bag.length) { toast('Your bag is empty'); return; }
+    toast('Checkout coming soon');
+  });
+
+  /* ======================================================================
+     H. VIEW SWITCHING + PRODUCTS
+     ====================================================================== */
+  function showView(view) {
+    // Hide everything first
+    runway.hidden = true;
+    productsPage.hidden = true;
+    productDetail.hidden = true;
+    aboutPage.hidden = true;
+    contactPage.hidden = true;
+    document.body.classList.remove('is-page');
+
+    // Close any open states
+    if (S.focusTarget) closeLook();
+    closeCart();
+    nav.classList.remove('is-menu');
+    burger.setAttribute('aria-expanded', 'false');
+
+    S.currentView = view;
+
+    // Update nav active state
+    document.querySelectorAll('.nav__links a').forEach(a => {
+      a.classList.toggle('is-active', a.dataset.view === view || (view === 'product' && a.dataset.view === 'products'));
+    });
+
+    if (view === 'runway') {
+      runway.hidden = false;
+      document.body.style.overflow = 'hidden';
+      kick();
+    } else {
+      document.body.classList.add('is-page');
+      document.body.style.overflow = 'auto';
+
+      if (view === 'products') {
+        productsPage.hidden = false;
+        renderProductsGrid();
+      } else if (view === 'product') {
+        productDetail.hidden = false;
+      } else if (view === 'about') {
+        aboutPage.hidden = false;
+      } else if (view === 'contact') {
+        contactPage.hidden = false;
+      }
+    }
+
+    window.scrollTo(0, 0);
+  }
+
+  // Collect unique products from all looks
+  function getAllProducts() {
+    const map = new Map();
+    LOOKS.forEach(look => {
+      (look.products || []).forEach(p => {
+        const key = p.id || p.name;
+        if (!map.has(key)) {
+          map.set(key, {
+            id: key,
+            name: p.name,
+            price: Number(p.price) || 0,
+            image: p.image,
+            brand: p.brand || CFG.brand,
+            description: p.description || `Premium ${p.name.toLowerCase()} from the Passion collection. Crafted with attention to detail and designed to complete your look.`
+          });
+        }
+      });
+    });
+    return Array.from(map.values());
+  }
+
+  function renderProductsGrid() {
+    const products = getAllProducts();
+    productsGrid.innerHTML = products.map(p => `
+      <article class="product-card" data-id="${esc(p.id)}">
+        <div class="product-card__img">
+          <img src="\( {esc(p.image)}" alt=" \){esc(p.name)}" loading="lazy">
+        </div>
+        <div class="product-card__body">
+          <h3 class="product-card__name">${esc(p.name)}</h3>
+          <div class="product-card__price">${fmt.format(p.price)}</div>
+          <div class="product-card__rating">★ 4.5</div>
+        </div>
+      </article>
+    `).join('');
+
+    productsGrid.querySelectorAll('.product-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.dataset.id;
+        const product = getAllProducts().find(p => p.id === id);
+        if (product) openProductDetail(product);
+      });
+    });
+  }
+
+  function openProductDetail(product) {
+    S.currentProduct = product;
+    S.selectedSize = 'S';
+    S.selectedColor = 'Black';
+
+    detailImg.src = product.image;
+    detailImg.alt = product.name;
+    detailName.textContent = product.name;
+    detailPrice.textContent = fmt.format(product.price);
+    detailDesc.textContent = product.description;
+
+    // Reset size/color buttons
+    sizeRow.querySelectorAll('.size').forEach(btn => {
+      btn.classList.toggle('is-active', btn.textContent === 'S');
+    });
+    colorRow.querySelectorAll('.color').forEach(btn => {
+      btn.classList.toggle('is-active', btn.dataset.color === 'Black');
+    });
+
+    showView('product');
+  }
+
+  // Size & color selection
+  sizeRow.addEventListener('click', (e) => {
+    const btn = e.target.closest('.size');
+    if (!btn) return;
+    sizeRow.querySelectorAll('.size').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    S.selectedSize = btn.textContent;
+  });
+  colorRow.addEventListener('click', (e) => {
+    const btn = e.target.closest('.color');
+    if (!btn) return;
+    colorRow.querySelectorAll('.color').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    S.selectedColor = btn.dataset.color;
+  });
+
+  detailAddBtn.addEventListener('click', () => {
+    if (!S.currentProduct) return;
+    addToBag(S.currentProduct);
+    toast(`${S.currentProduct.name} added to bag`);
+  });
+
+  orderNowBtn.addEventListener('click', () => {
+    if (!S.currentProduct) return;
+    addToBag(S.currentProduct);
+    openCart();
+    toast('Ready for checkout');
+  });
+
+  backToProducts.addEventListener('click', () => showView('products'));
+
+  // Nav links
+  document.querySelectorAll('[data-view]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const view = el.dataset.view;
+      if (view) showView(view);
+    });
+  });
+
+  profileBtn.addEventListener('click', () => {
+    toast('Profile coming soon');
+  });
+
+  /* ======================================================================
+     I. PIN HELPER + BOOT
+     ====================================================================== */
   function pinHelper(e, it) {
     const r = it.hit.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width * 100).toFixed(1), y = ((e.clientY - r.top) / r.height * 100).toFixed(1);
+    const x = ((e.clientX - r.left) / r.width * 100).toFixed(1);
+    const y = ((e.clientY - r.top) / r.height * 100).toFixed(1);
     const txt = `pin: { x: ${x}, y: ${y} }`;
     helperEl.hidden = false; helperEl.textContent = txt;
     console.log('[Passion pin helper]', txt);
-    // Clipboard needs https / localhost; on file:// it is simply skipped.
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(txt).then(() => { helperEl.textContent = txt + '   (copied)'; }).catch(() => {});
     }
   }
 
-  /* ======================================================================
-     H. BOOT
-     ====================================================================== */
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('is-on');
+    clearTimeout(toast.timeout);
+    toast.timeout = setTimeout(() => toastEl.classList.remove('is-on'), 2300);
+  }
+
+  // Boot
   measure();
   new ResizeObserver(() => { measure(); S.drawn = false; kick(); }).observe(stage);
   window.addEventListener('resize', () => { measure(); S.drawn = false; kick(); });
-  drawItems();                                    // first paint (everything starts hidden by the intro)
+  drawItems();
 
-  // Wait (briefly) for the first images so the intro doesn't play on empty space.
   const ready = Promise.race([
     Promise.all(items.slice(0, 5).map((it) => (it.img.decode ? it.img.decode().catch(() => {}) : Promise.resolve()))),
     new Promise((r) => setTimeout(r, 1400)),
   ]);
   ready.then(() => { sizeItems(); S.introOn = true; kick(); });
 
-  // Public API (handy for the console / your own buttons)
-  window.Passion = { goTo, next, prev: prevLook, openLook, closeLook, getBag: () => S.bag };
+  // Start on runway
+  showView('runway');
+  updateBagUI();
+
+  // Public API
+  window.Passion = {
+    goTo, next, prev: prevLook, openLook, closeLook,
+    getBag: () => S.bag,
+    showView
+  };
 })();
