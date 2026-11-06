@@ -1,19 +1,7 @@
 /* ==========================================================================
-   PASSION — "Try the Look"
-   Sections
-     0. Tokens & reset
-     1. Navigation
-     2. Runway shell (heading, stage, floor)
-     3. Looks: figure, pins, SHADOW
-     4. Bottom controls (index, arrows, pause)
-     5. Look mode UI (header, close, hint, cursor chip)
-     6. "In this look" panel
-     7. Toast, helper
-     8. Responsive (≤ 900 / ≤ 760)
-     9. Reduced motion
+   PASSION — "Try the Look"  (updated)
    ========================================================================== */
 
-/* ---------- 0. Tokens & reset ------------------------------------------- */
 :root {
   --bg-a: #ffffff;
   --bg-b: #f7f7f8;
@@ -22,11 +10,11 @@
   --ink-2: #3b3b40;
   --muted: #7a7a80;
   --line: rgba(11, 11, 12, .12);
-  --nav-h: 68px;
+  --nav-h: 72px;
   --gutter: clamp(20px, 3.6vw, 56px);
   --panel-w: min(420px, 100vw);
-  --sheet-h: min(46svh, 400px);                 /* phone bottom-sheet height (JS mirrors this) */
-  --ease: cubic-bezier(.22, 1, .36, 1);       /* soft, long deceleration */
+  --sheet-h: min(46svh, 400px);
+  --ease: cubic-bezier(.22, 1, .36, 1);
   --ease-io: cubic-bezier(.65, 0, .35, 1);
   --font: "Hanken Grotesk", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
 }
@@ -39,65 +27,71 @@ body {
   background: var(--bg-b);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow: hidden;                      /* the lookbook is a single, full-viewport scene */
+  overflow: hidden;
 }
+body.is-page { overflow: auto; background: #f4f4f5; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 ul, ol { list-style: none; margin: 0; padding: 0; }
 img { display: block; max-width: none; }
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-
 [hidden] { display: none !important; }
 
-/* ---------- 1. Navigation ----------------------------------------------- */
+/* ---------- NAVIGATION (pill style like your screenshots) ---------- */
 .nav {
-  position: fixed; inset: 0 0 auto 0; z-index: 60;
-  height: var(--nav-h);
+  position: fixed; inset: 16px 0 auto 0; z-index: 80;
+  display: flex; justify-content: center; pointer-events: none;
+}
+.nav__inner {
+  pointer-events: auto;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 var(--gutter);
-  background: rgba(255, 255, 255, .82);
-  -webkit-backdrop-filter: saturate(1.4) blur(18px);
-  backdrop-filter: saturate(1.4) blur(18px);
-  border-bottom: 1px solid var(--line);
+  width: min(920px, calc(100% - 32px));
+  height: 56px;
+  padding: 0 10px 0 22px;
+  background: rgba(255, 255, 255, .92);
+  -webkit-backdrop-filter: saturate(1.4) blur(20px);
+  backdrop-filter: saturate(1.4) blur(20px);
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 999px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
 }
-.nav__left { display: flex; align-items: center; min-width: 0; }
 .nav__brand {
-  font-size: 26px; font-weight: 800; letter-spacing: -.045em; line-height: 1;
+  font-size: 20px; font-weight: 800; letter-spacing: -.04em; line-height: 1;
+  flex-shrink: 0;
 }
-.nav__links { display: flex; align-items: center; gap: 34px; margin-left: clamp(28px, 4.4vw, 64px); }
+.nav__links {
+  display: flex; align-items: center; gap: 28px;
+  margin: 0 24px;
+}
 .nav__links a {
-  position: relative; font-size: 13.5px; font-weight: 500; color: var(--muted);
-  padding: 6px 0; transition: color .3s;
+  font-size: 13.5px; font-weight: 500; color: var(--muted);
+  transition: color .25s;
 }
-.nav__links a::after {                       /* hover / current underline */
-  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
-  background: currentColor; transform: scaleX(0); transform-origin: left;
-  transition: transform .5s var(--ease);
-}
-.nav__links a:hover, .nav__links a[aria-current="page"] { color: var(--ink); }
-.nav__links a:hover::after, .nav__links a[aria-current="page"]::after { transform: scaleX(1); }
+.nav__links a:hover,
+.nav__links a.is-active { color: var(--ink); }
 
-.nav__right { display: flex; align-items: center; gap: 6px; }
+.nav__right { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
 .icon-btn {
-  position: relative; width: 42px; height: 42px; border-radius: 50%;
-  display: grid; place-items: center; transition: background .3s;
+  position: relative; width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center; transition: background .25s;
 }
-.icon-btn:hover { background: rgba(0, 0, 0, .05); }
+.icon-btn:hover { background: rgba(0,0,0,.05); }
 .badge {
-  position: absolute; top: 4px; right: 3px; min-width: 17px; height: 17px; padding: 0 4px;
-  border-radius: 9px; background: var(--ink); color: #fff;
+  position: absolute; top: 2px; right: 2px; min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 8px; background: #111; color: #fff;
   font-size: 10px; font-weight: 700; display: grid; place-items: center;
 }
 .badge.is-bump { animation: bump .5s var(--ease); }
 @keyframes bump { 0% { transform: scale(.4) } 60% { transform: scale(1.25) } 100% { transform: scale(1) } }
 .nav__burger { display: none; }
 
-/* ---------- 2. Runway shell --------------------------------------------- */
+/* ---------- RUNWAY (kept almost identical) ---------- */
 .runway {
   position: relative; height: 100svh; min-height: 600px; overflow: hidden;
   background: radial-gradient(110% 80% at 50% 40%, var(--bg-a) 0%, var(--bg-b) 58%, var(--bg-c) 100%);
 }
 .runway[data-stage="white"] { background: #fff; --bg-c: #fff; }
+.runway[hidden] { display: none !important; }
 
 .head {
   position: absolute; z-index: 8; pointer-events: none;
@@ -115,7 +109,7 @@ img { display: block; max-width: none; }
 }
 @keyframes blurIn {
   from { opacity: 0; filter: blur(12px); transform: translateY(10px); }
-  to   { opacity: 1; filter: blur(0);    transform: none; }
+  to   { opacity: 1; filter: blur(0); transform: none; }
 }
 .runway.is-look .head { opacity: 0; transform: translateY(-10px); filter: blur(6px); }
 
@@ -126,19 +120,16 @@ img { display: block; max-width: none; }
 .stage.is-dragging { cursor: grabbing; }
 .runway.is-look .stage { cursor: default; }
 
-/* Soft floor: a barely-there darker band that grounds the shadows */
 .floor {
   position: absolute; left: -10%; right: -10%; bottom: 0;
   top: calc(var(--floor-y, 70%) - 70px);
   background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(20,20,30,.028) 42%, rgba(20,20,30,.055) 100%);
   pointer-events: none;
 }
-.runway[data-stage="white"] .floor { opacity: .5; }
 .looks { position: absolute; inset: 0; }
 
-/* ---------- 3. Looks: figure · pins · shadow ---------------------------- */
 .look {
-  position: absolute; left: 0; top: 0;               /* JS sets width / height / transform */
+  position: absolute; left: 0; top: 0;
   transform-origin: 50% 100%;
   will-change: transform, opacity, filter;
   backface-visibility: hidden;
@@ -147,7 +138,6 @@ img { display: block; max-width: none; }
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: contain; object-position: 50% 100%;
   pointer-events: none; -webkit-user-drag: none; user-select: none;
-  /* tiny cut-out lift so the figure separates from the floor */
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .06));
 }
 .look__hit {
@@ -155,27 +145,18 @@ img { display: block; max-width: none; }
 }
 .runway.is-look .look:not(.is-focus) { pointer-events: none; }
 
-/* ── THE SHADOW ───────────────────────────────────────────────────────────
-   Three stacked, blurred ellipses centred on the feet line:
-     .sh--ambient  long, very soft pool (the "floating" feel)
-     .sh--core     mid-density body of the shadow
-     .sh--contact  tight, darkest, right under the soles
-   Sizes are % of the figure box, so they scale with every model.
-   JS (app.js) drives the .shadow wrapper each frame:
-     · translateX trails behind the motion  · scaleX stretches with speed
-     · lift (hover / focus) shrinks + softens it, as if the model floats up.   */
 .shadow {
-  position: absolute; inset: 0;                       /* same box as the figure → % sizes resolve correctly */
+  position: absolute; inset: 0;
   pointer-events: none; z-index: 0; will-change: transform, opacity;
 }
-.sh {                                                 /* anchored on the "feet line" = bottom edge − feetOffset */
+.sh {
   position: absolute; left: 50%; top: calc(100% - var(--feet, 0) * 1%);
   border-radius: 50%; transform: translate(-50%, -34%);
 }
 .sh--ambient {
   width: 230%; height: 7.4%;
   background: radial-gradient(closest-side, rgba(22, 22, 32, .30) 0%, rgba(22, 22, 32, .13) 52%, rgba(22, 22, 32, 0) 100%);
-  filter: blur(9px); margin-left: 4%;                  /* light from top-left → shadow leans right */
+  filter: blur(9px); margin-left: 4%;
 }
 .sh--core {
   width: 135%; height: 3.4%;
@@ -189,13 +170,12 @@ img { display: block; max-width: none; }
 }
 .look.is-focus .sh--ambient { filter: blur(12px); }
 
-/* Pins: numbered rings, constant size (JS counter-scales with --inv) */
 .pins { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
 .pin {
   position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%;
   pointer-events: none; opacity: 0;
-  scale: var(--inv, 1);                          /* counter-scales the look's zoom, updated every frame */
-  transform: scale(.35);                         /* pop-in lives on its own property so it can transition */
+  scale: var(--inv, 1);
+  transform: scale(.35);
   transition: transform .7s var(--ease), opacity .45s ease;
   transition-delay: 0s;
   border: 1px solid rgba(255, 255, 255, .95);
@@ -203,7 +183,7 @@ img { display: block; max-width: none; }
   box-shadow: 0 0 0 1px rgba(0, 0, 0, .16), 0 8px 20px rgba(0, 0, 0, .16);
   -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
 }
-.pin::before {                                   /* idle ping */
+.pin::before {
   content: ""; position: absolute; inset: -1px; border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, .35); opacity: 0;
   animation: ping 2.8s ease-out infinite; animation-delay: calc(var(--i, 0) * .35s + 1.4s);
@@ -222,7 +202,6 @@ img { display: block; max-width: none; }
 .look.is-focus .pin:hover, .look.is-focus .pin.is-hot { transform: scale(1.14); transition-delay: 0s; }
 .pin:hover::after, .pin.is-hot::after { background: var(--ink); color: #fff; }
 
-/* ---------- 4. Bottom controls ------------------------------------------ */
 .controls {
   position: absolute; z-index: 10; left: var(--gutter); right: var(--gutter); bottom: 26px;
   display: flex; align-items: center; gap: clamp(18px, 3vw, 40px);
@@ -238,7 +217,6 @@ img { display: block; max-width: none; }
 .pause[aria-pressed="true"] .i-pause { display: none; }
 .pause[aria-pressed="true"] .i-play { display: block; }
 
-/* Segmented progress index: 01 The City Edit ▬▬▬  02  03 … */
 .index { display: flex; align-items: flex-start; gap: 10px; }
 .idx { display: block; text-align: left; padding: 10px 0; margin: -10px 0; }
 .idx__bar { display: block; position: relative; height: 2px; background: rgba(0, 0, 0, .12); overflow: hidden; }
@@ -255,7 +233,6 @@ img { display: block; max-width: none; }
 .idx.is-active .idx__label em { max-width: 200px; opacity: 1; font-weight: 600; }
 .idx.is-active .idx__bar { background: rgba(0, 0, 0, .14); }
 
-/* ---------- 5. Look-mode UI --------------------------------------------- */
 .lookhead {
   position: absolute; z-index: 9; top: calc(var(--nav-h) + clamp(26px, 4.4vh, 48px)); left: var(--gutter);
   display: flex; flex-direction: column; gap: 6px; pointer-events: none;
@@ -288,7 +265,6 @@ img { display: block; max-width: none; }
 .runway.is-look .hint { opacity: 1; transform: none; transition-delay: .6s, .6s, 0s; }
 .runway.has-panel .hint { right: var(--panel-w); }
 
-/* Cursor chip over the centre model (desktop pointers only) */
 .cursor {
   position: fixed; z-index: 90; left: 0; top: 0; width: 66px; height: 66px; border-radius: 50%;
   display: grid; place-items: center; pointer-events: none;
@@ -301,7 +277,6 @@ img { display: block; max-width: none; }
 @media (hover: none), (pointer: coarse) { .cursor { display: none; } }
 body.has-chip .look.is-center .look__hit { cursor: none; }
 
-/* ---------- 6. "In this look" panel ------------------------------------- */
 .panel {
   position: absolute; z-index: 40; top: var(--nav-h); right: 0; bottom: 0; width: var(--panel-w);
   display: flex; flex-direction: column;
@@ -328,7 +303,7 @@ body.has-chip .look.is-center .look__hit { cursor: none; }
   transition: opacity .6s ease, transform .9s var(--ease), background .35s;
 }
 .runway.has-panel .item { opacity: 1; transform: none; transition-delay: calc(var(--i, 0) * 80ms + 380ms), calc(var(--i, 0) * 80ms + 380ms), 0s; }
-.item::before {                                  /* hot-row wash (pin hover / click) */
+.item::before {
   content: ""; position: absolute; inset: 0 -28px; background: rgba(0, 0, 0, .035); opacity: 0; transition: opacity .35s; z-index: -1;
 }
 .item.is-hot::before { opacity: 1; }
@@ -375,7 +350,6 @@ body.has-chip .look.is-center .look__hit { cursor: none; }
 .cta:active { transform: scale(.992); }
 .cta.is-done { background: #1f6b3a; }
 
-/* ---------- 7. Toast & helper ------------------------------------------- */
 .toast {
   position: fixed; z-index: 100; left: 50%; bottom: 92px; transform: translate(-50%, 20px);
   background: var(--ink); color: #fff; padding: 12px 18px; font-size: 13px; font-weight: 500;
@@ -389,62 +363,151 @@ body.has-chip .look.is-center .look__hit { cursor: none; }
   font: 12px/1.5 ui-monospace, Menlo, monospace; background: #111; color: #fff; border-radius: 6px;
 }
 
-/* ---------- 8. Responsive ------------------------------------------------ */
+/* ---------- NEW PAGES (Products / About / Contact / Detail) ---------- */
+.page {
+  position: fixed; inset: 0; z-index: 50;
+  overflow-y: auto; padding: 100px 0 80px;
+  background: #f4f4f5;
+}
+.page__inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 24px;
+}
+.page__inner.narrow { max-width: 640px; }
+.page__head { text-align: center; margin-bottom: 48px; }
+.page__head h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 500; margin: 0 0 8px; letter-spacing: -.02em; }
+.page__head p { color: var(--muted); margin: 0; }
+
+/* Products grid */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 28px 20px;
+}
+.product-card {
+  background: #fff; border-radius: 18px; overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,.04);
+  transition: transform .4s var(--ease), box-shadow .4s;
+  cursor: pointer;
+}
+.product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+.product-card__img {
+  aspect-ratio: 3/4; background: #f0f0f1;
+  display: grid; place-items: center; overflow: hidden;
+}
+.product-card__img img {
+  width: 85%; height: 85%; object-fit: contain; transition: transform .6s var(--ease);
+}
+.product-card:hover .product-card__img img { transform: scale(1.05); }
+.product-card__body { padding: 16px 16px 20px; }
+.product-card__name { font-size: 14px; font-weight: 500; margin: 0 0 4px; }
+.product-card__price { font-size: 14px; font-weight: 600; }
+.product-card__rating { font-size: 12px; color: #f59e0b; margin-top: 6px; }
+
+/* Product detail */
+.detail__grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start;
+  background: #fff; border-radius: 24px; padding: 40px; box-shadow: 0 8px 40px rgba(0,0,0,.05);
+}
+.detail__media {
+  background: #f5f5f6; border-radius: 18px; aspect-ratio: 1; display: grid; place-items: center;
+}
+.detail__media img { max-width: 80%; max-height: 80%; object-fit: contain; }
+.detail__info h1 { font-size: 28px; font-weight: 600; margin: 0 0 8px; letter-spacing: -.02em; }
+.detail__price { font-size: 24px; font-weight: 600; margin-bottom: 16px; }
+.detail__desc { color: var(--ink-2); line-height: 1.6; margin-bottom: 28px; font-size: 15px; }
+.detail__option { margin-bottom: 24px; }
+.detail__option .label { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.size-row, .color-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.size {
+  min-width: 44px; height: 40px; padding: 0 12px; border-radius: 10px;
+  border: 1px solid var(--line); font-size: 13px; font-weight: 500;
+  transition: all .2s;
+}
+.size.is-active, .size:hover { background: #111; color: #fff; border-color: #111; }
+.color {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--c);
+  border: 2px solid transparent; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1);
+  transition: transform .2s;
+}
+.color.is-active { box-shadow: 0 0 0 2px #111; transform: scale(1.1); }
+.detail__actions { display: flex; gap: 12px; margin-top: 32px; }
+.btn {
+  height: 50px; padding: 0 28px; border-radius: 12px; font-size: 14px; font-weight: 600;
+  transition: all .25s;
+}
+.btn--primary { background: #111; color: #fff; }
+.btn--primary:hover { background: #333; }
+.btn--ghost { border: 1px solid var(--line); }
+.btn--ghost:hover { border-color: #111; }
+.back-btn {
+  margin-bottom: 24px; font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px;
+}
+.back-btn:hover { color: var(--ink); }
+
+/* About / Contact */
+.page--about p, .page--contact p { line-height: 1.7; color: var(--ink-2); margin-bottom: 16px; }
+.contact-card {
+  background: #fff; border-radius: 16px; padding: 28px; margin-top: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.04);
+}
+.contact-card p { margin-bottom: 18px; }
+.contact-card p:last-child { margin-bottom: 0; }
+
+/* Cart drawer */
+.cart-overlay {
+  position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.35);
+  opacity: 0; visibility: hidden; transition: opacity .4s, visibility .4s;
+}
+.cart-overlay.is-open { opacity: 1; visibility: visible; }
+.cart {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 95;
+  width: min(400px, 100%); background: #fff;
+  display: flex; flex-direction: column;
+  transform: translateX(100%); transition: transform .5s var(--ease);
+  box-shadow: -12px 0 40px rgba(0,0,0,.1);
+}
+.cart.is-open { transform: none; }
+.cart__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 24px 16px; border-bottom: 1px solid var(--line);
+}
+.cart__head h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.cart__list { flex: 1; overflow-y: auto; padding: 8px 0; }
+.cart-item {
+  display: grid; grid-template-columns: 72px 1fr auto; gap: 14px; align-items: center;
+  padding: 14px 24px;
+}
+.cart-item img { width: 72px; height: 84px; object-fit: contain; background: #f5f5f6; border-radius: 8px; }
+.cart-item__name { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+.cart-item__meta { font-size: 12px; color: var(--muted); }
+.cart-item__price { font-size: 14px; font-weight: 600; }
+.cart__foot { padding: 20px 24px calc(24px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+.cart__total { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 15px; }
+.cart__total strong { font-size: 18px; }
+.cart .cta { height: 50px; }
+
+/* Responsive */
 @media (max-width: 900px) {
-  .nav__links { gap: 22px; margin-left: 28px; }
-  .idx.is-active { width: 130px; }
+  .nav__links { gap: 18px; }
+  .detail__grid { grid-template-columns: 1fr; gap: 32px; padding: 24px; }
 }
-
 @media (max-width: 760px) {
-  :root { --nav-h: 60px; }
-  .nav__brand { font-size: 23px; }
   .nav__burger { display: grid; }
-  .nav__links {                                  /* collapses into a dropdown */
-    position: fixed; top: var(--nav-h); left: 0; right: 0; margin: 0;
-    flex-direction: column; align-items: stretch; gap: 0; padding: 8px var(--gutter) 18px;
-    background: #fff; border-bottom: 1px solid var(--line);
+  .nav__links {
+    position: fixed; top: 80px; left: 16px; right: 16px; margin: 0;
+    flex-direction: column; align-items: stretch; gap: 0; padding: 12px 0;
+    background: #fff; border-radius: 16px; border: 1px solid var(--line);
+    box-shadow: 0 12px 40px rgba(0,0,0,.12);
     transform: translateY(-8px); opacity: 0; visibility: hidden;
-    transition: opacity .35s ease, transform .6s var(--ease), visibility 0s linear .6s;
+    transition: opacity .3s, transform .4s var(--ease), visibility .3s;
   }
-  .nav.is-menu .nav__links { transform: none; opacity: 1; visibility: visible; transition-delay: 0s; }
-  .nav__links a { font-size: 17px; padding: 14px 0; color: var(--ink); border-bottom: 1px solid var(--line); }
-  .nav__links a::after { display: none; }
-
-  .head__sub { max-width: 30ch; line-height: 1.45; }
-  .controls { bottom: 20px; gap: 14px; }
-  .index { gap: 6px; }
-  .idx { width: 22px; }
-  .idx.is-active { width: 112px; }
-  .idx__label { font-size: 10px; }
-  .idx__label b { font-weight: 600; }
-  .controls__right { gap: 10px; }
-  .pause { display: none; }
-  .close { top: calc(var(--nav-h) + 14px); right: var(--gutter); width: 38px; height: 38px; }
-  .runway.has-panel .close { right: var(--gutter); }
-  .hint { bottom: auto; top: calc(var(--nav-h) + 62px); }
-  .runway.has-panel .hint { right: 0; opacity: 0; }
-
-  /* Panel becomes a bottom sheet */
-  .panel {
-    top: auto; left: 0; right: 0; width: auto; height: var(--sheet-h);
-    border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0;
-    transform: translateY(104%); box-shadow: 0 -20px 50px rgba(0, 0, 0, .08);
-  }
-  .panel__head { padding: 20px 20px 12px; }
-  .panel__list { padding: 0 20px; }
-  .item { grid-template-columns: 70px 1fr auto; gap: 14px; padding: 12px 0; }
-  .item__thumb { width: 70px; height: 82px; }
-  .item__info { padding-top: 8px; }
-  .item::before { inset: 0 -20px; }
-  .panel__foot { padding: 14px 20px calc(18px + env(safe-area-inset-bottom)); }
-  .bundle { margin-bottom: 12px; }
-  .cta { height: 50px; }
-  .toast { left: 50%; bottom: calc(var(--sheet-h) + 16px); }
-  .pin { width: 28px; height: 28px; margin: -14px 0 0 -14px; }
-  .pin::after { inset: 5px; font-size: 10px; }
+  .nav.is-menu .nav__links { transform: none; opacity: 1; visibility: visible; }
+  .nav__links a { font-size: 16px; padding: 14px 20px; color: var(--ink); border-bottom: 1px solid var(--line); }
+  .nav__links a:last-child { border-bottom: 0; }
+  .products-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .page { padding-top: 90px; }
 }
 
-/* ---------- 9. Reduced motion ------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .head__title, .head__sub { animation: none; }
   .pin::before { animation: none; }
