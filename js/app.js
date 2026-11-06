@@ -126,32 +126,55 @@
     return it;
   });
 
-  const idxBtns = LOOKS.map((look, i) => {
-    const li = document.createElement('li');
-    li.innerHTML = `<button class="idx" type="button" data-i="${i}" aria-label="Go to look ${i + 1}: ${esc(look.title)}">` +
-      `<span class="idx__bar"><i></i></span><span class="idx__label"><b>\( {pad2(i + 1)}</b><em> \){esc(look.title)}</em></span></button>`;
-    indexEl.appendChild(li);
-    return li.firstElementChild;
-  });
-  const idxFills = idxBtns.map((b) => b.querySelector('.idx__bar i'));
+  // Bottom index (01 The City Edit ▬▬▬ 02 03 …)
+const idxBtns = LOOKS.map((look, i) => {
+  const li = document.createElement('li');
+  const title = look.title || `Look ${i + 1}`;
+  li.innerHTML = `
+    <button class="idx" type="button" data-i="${i}" aria-label="Go to look ${i + 1}: ${esc(title)}">
+      <span class="idx__bar"><i></i></span>
+      <span class="idx__label"><b>\( {pad2(i + 1)}</b><em> \){esc(title)}</em></span>
+    </button>`;
+  indexEl.appendChild(li);
+  return li.firstElementChild;
+});
+const idxFills = idxBtns.map((b) => b.querySelector('.idx__bar i'));
 
   /* ======================================================================
      C. MEASURING / GEOMETRY
      ====================================================================== */
-  function measure() {
-    const r = stage.getBoundingClientRect();
-    S.W = r.width; S.Hs = r.height;
-    S.mobile = window.innerWidth <= 760;
-    S.sheetH = S.mobile ? Math.min(window.innerHeight * 0.46, 400) : 0;
-    S.floorY = S.Hs - (S.mobile ? 92 : 104);
-    S.Hc = S.mobile ? clamp(S.floorY - 176, 220, 560) : clamp(S.floorY * 0.72, 260, 640);
-    const sp = CFG.spacing || 1;
-    S.S1 = S.mobile ? S.W * 0.50 * sp : S.Hc * 0.56 * sp;
-    S.S2 = S.mobile ? S.W * 0.17 * sp : S.Hc * 0.24 * sp;
-    runway.style.setProperty('--floor-y', S.floorY + 'px');
-    sizeItems();
-    if (!S.geoReady) { const g = focusGeo(); S.fcx = g.cx; S.fFloor = g.floor; S.fH = g.h; S.geoReady = true; }
+function measure() {
+  const r = stage.getBoundingClientRect();
+  S.W = r.width;
+  S.Hs = r.height;
+  S.mobile = window.innerWidth <= 760;
+  S.sheetH = S.mobile ? Math.min(window.innerHeight * 0.46, 400) : 0;
+
+  // Floor line (where the feet stand)
+  S.floorY = S.Hs - (S.mobile ? 100 : 110);
+
+  // Model height – bigger on desktop
+  if (S.mobile) {
+    S.Hc = clamp(S.floorY - 160, 260, 520);
+  } else {
+    S.Hc = clamp(S.floorY * 0.82, 380, 720);   // ← bigger models on desktop
   }
+
+  const sp = CFG.spacing || 1;
+  S.S1 = S.mobile ? S.W * 0.48 * sp : S.Hc * 0.52 * sp;
+  S.S2 = S.mobile ? S.W * 0.16 * sp : S.Hc * 0.22 * sp;
+
+  runway.style.setProperty('--floor-y', S.floorY + 'px');
+  sizeItems();
+
+  if (!S.geoReady) {
+    const g = focusGeo();
+    S.fcx = g.cx;
+    S.fFloor = g.floor;
+    S.fH = g.h;
+    S.geoReady = true;
+  }
+}
   function sizeItems() {
     items.forEach((it) => { it.w = S.Hc * it.aspect; it.el.style.width = it.w + 'px'; it.el.style.height = S.Hc + 'px'; });
   }
