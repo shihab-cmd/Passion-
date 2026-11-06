@@ -10,7 +10,7 @@
   --ink-2: #3b3b40;
   --muted: #7a7a80;
   --line: rgba(11, 11, 12, .12);
-  --nav-h: 72px;
+  --nav-h: 88px;
   --gutter: clamp(20px, 3.6vw, 56px);
   --panel-w: min(420px, 100vw);
   --sheet-h: min(46svh, 400px);
@@ -37,14 +37,22 @@ img { display: block; max-width: none; }
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 [hidden] { display: none !important; }
 
-/* ---------- NAVIGATION (pill style like your screenshots) ---------- */
+/* ---------- NAVIGATION (pill style) ---------- */
 .nav {
-  position: fixed; inset: 16px 0 auto 0; z-index: 80;
-  display: flex; justify-content: center; pointer-events: none;
+  position: fixed;
+  top: 16px;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
 }
 .nav__inner {
   pointer-events: auto;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: min(920px, calc(100% - 32px));
   height: 56px;
   padding: 0 10px 0 22px;
