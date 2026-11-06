@@ -3,8 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Try the Look — Passion</title>
-  <meta name="description" content="Six looks, styled head to toe. Tap a pin to see the piece.">
+  <title>Passion — Try the Look</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,13 +13,13 @@
 </head>
 <body>
 
-  <!-- ===================== NAVIGATION (pill style) ===================== -->
+  <!-- ===================== NAVBAR (Floating Pill) ===================== -->
   <header class="nav" id="nav">
     <div class="nav__inner">
-      <a class="nav__brand" href="#" data-view="runway" aria-label="Passion — home">Passion</a>
+      <a class="nav__brand" href="#" data-view="runway">PASSION</a>
 
       <nav class="nav__links" id="navLinks" aria-label="Main">
-        <a href="#" data-view="runway">Home</a>
+        <a href="#" data-view="runway" class="is-active">Home</a>
         <a href="#" data-view="products">Products</a>
         <a href="#" data-view="about">About Us</a>
         <a href="#" data-view="contact">Contact Us</a>
@@ -41,11 +40,11 @@
     </div>
   </header>
 
-  <!-- ===================== RUNWAY (original) ===================== -->
+  <!-- ===================== HOME (RUNWAY) ===================== -->
   <main class="runway" id="runway">
     <div class="head" id="head">
       <h1 class="head__title">Try the Look.</h1>
-      <p class="head__sub">Six looks, styled head to toe. Tap a pin to see the piece.</p>
+      <p class="head__sub">Explore looks styled head to toe. Tap a pin to see the piece.</p>
     </div>
 
     <div class="lookhead" id="lookhead" aria-hidden="true">
@@ -111,18 +110,17 @@
 
   <!-- ===================== PRODUCTS PAGE ===================== -->
   <section class="page page--products" id="productsPage" hidden>
-    <div class="page__inner">
+    <div class="products-card-wrapper">
       <header class="page__head">
         <h1>Best Selling Product Of The <strong>Collection</strong></h1>
-        <p>Discover every piece from our looks</p>
       </header>
-      <div class="products-grid" id="productsGrid"></div>
+      <div class="products-showcase" id="productsGrid"></div>
     </div>
   </section>
 
-  <!-- ===================== PRODUCT DETAIL ===================== -->
+  <!-- ===================== PRODUCT DETAIL PAGE ===================== -->
   <section class="page page--detail" id="productDetail" hidden>
-    <div class="page__inner detail">
+    <div class="detail-card-container">
       <button class="back-btn" id="backToProducts" type="button">← Back</button>
       <div class="detail__grid">
         <div class="detail__media">
@@ -130,7 +128,7 @@
         </div>
         <div class="detail__info">
           <h1 id="detailName">—</h1>
-          <div class="detail__price" id="detailPrice">$0</div>
+          <div class="detail__price" id="detailPrice">$0.00</div>
           <p class="detail__desc" id="detailDesc">—</p>
 
           <div class="detail__option">
@@ -162,24 +160,23 @@
     </div>
   </section>
 
-  <!-- ===================== ABOUT ===================== -->
+  <!-- ===================== ABOUT PAGE ===================== -->
   <section class="page page--about" id="aboutPage" hidden>
     <div class="page__inner narrow">
       <h1>About Passion</h1>
-      <p>Passion is a modern fashion brand built around clean silhouettes, premium fabrics and considered details. Our “Try the Look” experience lets you explore complete outfits the way they were designed — head to toe.</p>
-      <p>Every piece is chosen to work together so you can build a wardrobe that feels intentional and effortless.</p>
+      <p>Passion is a modern fashion brand built around clean silhouettes, premium fabrics, and considered details.</p>
+      <p>Our experience allows you to shop entire outfits seamlessly or explore single tailored items individually.</p>
     </div>
   </section>
 
-  <!-- ===================== CONTACT ===================== -->
+  <!-- ===================== CONTACT PAGE ===================== -->
   <section class="page page--contact" id="contactPage" hidden>
     <div class="page__inner narrow">
       <h1>Contact Us</h1>
-      <p>Questions about sizing, shipping or styling? We’re here to help.</p>
+      <p>Need help with your order or styling advice? Get in touch with us.</p>
       <div class="contact-card">
-        <p><strong>Email</strong><br>hello@passion.store</p>
-        <p><strong>Hours</strong><br>Mon – Fri · 9am – 6pm</p>
-        <p><strong>Instagram</strong><br>@passion</p>
+        <p><strong>Email:</strong> support@passion.com</p>
+        <p><strong>Hours:</strong> Mon – Fri, 9am – 6pm EST</p>
       </div>
     </div>
   </section>
